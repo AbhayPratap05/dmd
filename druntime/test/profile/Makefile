@@ -76,21 +76,14 @@ profile.done: profile$(DOTEXE)
 
 profilegc.done: profilegc$(DOTEXE)
 	@echo "Testing profilegc"
-	@rm -f myprofilegc.log myprofilegc.formatted.log
+	@rm -f myprofilegc.log myprofilegc.log.$(PLATFORM).$(MODEL).exp
 	./profilegc$(DOTEXE) myprofilegc.log
-	@echo "Formatted output:"
-	@if python3 format_profile.py < myprofilegc.log > myprofilegc.formatted.log 2>/dev/null; then \
-		cat myprofilegc.formatted.log; \
-		cp myprofilegc.formatted.log myprofilegc.log.$(PLATFORM).$(MODEL).exp; \
-	elif awk '/^[[:space:]]*[0-9]/{printf "%-8s %-4s %-30s %s\n", $$1, $$2, $$3, $$4}' myprofilegc.log > myprofilegc.formatted.log 2>/dev/null; then \
-		cat myprofilegc.formatted.log; \
-		cp myprofilegc.formatted.log myprofilegc.log.$(PLATFORM).$(MODEL).exp; \
-	else \
-		echo "Using raw output"; \
-		cat myprofilegc.log; \
-		cp myprofilegc.log myprofilegc.log.$(PLATFORM).$(MODEL).exp; \
-	fi
-	@touch	$@
+	@echo "Formatting output..."
+	@(echo "bytes allocated,allocations,type,function,location" && \
+	  awk 'BEGIN {OFS=","} {gsub(/ +/, " "); gsub(/ /, ","); print}' myprofilegc.log | \
+	  sed 's/,\([^,]*\):\([0-9]*\)$$/,\1:\2/') > myprofilegc.log.$(PLATFORM).$(MODEL).exp
+	@cat myprofilegc.log.$(PLATFORM).$(MODEL).exp
+	@touch $@
 
 both.done: both$(DOTEXE)
 	@echo "Testing both"
