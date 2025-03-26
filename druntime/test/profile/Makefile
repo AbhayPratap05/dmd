@@ -96,11 +96,11 @@ both.done: both$(DOTEXE)
 	@echo "Testing both"
 	@rm -f both.log both.def bothgc.log
 	./both$(DOTEXE) both.log both.def bothgc.log
-	
+
 	@echo "Verifying output..."
 	@grep -q '1 .*_Dmain' both.log || (echo "FAIL: _Dmain not found"; exit 1)
 	@grep -q '1000 .*both.Num\* both.foo(uint)' both.log || (echo "FAIL: foo calls not found"; exit 1)
-	
+
 	@# Process profile definitions (order-agnostic check)
 	@echo "Checking profile definitions..."
 	@if [ -f bothnew.def.exp ]; then \
@@ -113,7 +113,7 @@ both.done: both$(DOTEXE)
     else \
         cp both.def bothnew.def.exp; \
     fi
-	
+
 	@# Check GC profile
 	@echo "Checking GC profile..."
 	@if [ -f bothgc.log.exp ]; then \
@@ -127,7 +127,7 @@ both.done: both$(DOTEXE)
 		echo "Creating new reference: bothgc.log.exp"; \
 		cp bothgc.log bothgc.log.exp; \
 	fi
-	
+
 	@touch	$@
 
 # Compiler flags
@@ -137,5 +137,5 @@ both$(DOTEXE): extra_dflags += -profile -profile=gc
 
 .PHONY: clean
 clean:
-	rm	-f *.done	myprofilegc.log.darwin.64.exp	mytrace.def	mytrace.log	mytrace.def.sorted	myprofilegc.log	both.log	both.def	profilegc.o profile.o	myprofilegc.formatted.log	bothgc.log.norm	both.o	bothgc.log	both.def.content	mytrace.def.exp.sorted	bothgc.log.exp.norm	bothnew.def.exp.content	
+	rm	-f *.done	myprofilegc.log.darwin.64.exp	mytrace.def	mytrace.log	mytrace.def.sorted	myprofilegc.log	both.log	both.def	profilegc.o profile.o	myprofilegc.formatted.log	bothgc.log.norm	both.o	bothgc.log	both.def.content	mytrace.def.exp.sorted	bothgc.log.exp.norm	bothnew.def.exp.content
 	rm	-f	profile	profilegc	both	#	Explicit	executable	names
