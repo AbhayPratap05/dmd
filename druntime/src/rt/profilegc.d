@@ -148,7 +148,7 @@ shared static ~this()
     scope(exit)
         free(counts.ptr);
 
-    size_t i = 0; 
+    size_t i = 0;
 
     foreach (name, entry; globalNewCounts)
     {
