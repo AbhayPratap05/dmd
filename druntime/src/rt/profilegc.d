@@ -124,7 +124,8 @@ shared static ~this()
         const(char)[] name;
         Entry entry;
 
-        extern (C) static int qsort_cmp(scope const void *r1, scope const void *r2) @nogc nothrow @trusted
+        // qsort() comparator to sort by count field
+        extern (C) static int qsort_cmp(scope const void *r1, scope const void *r2) @nogc nothrow
         {
             auto result1 = cast(Result*)r1;
             auto result2 = cast(Result*)r2;
@@ -133,23 +134,17 @@ shared static ~this()
             cmp = result2.entry.count - result1.entry.count;
             if (cmp) return cmp < 0 ? -1 : 1;
             if (result2.name == result1.name) return 0;
-
-            return result1.name < result2.name ? -1 : 1;
+            // ascending order for names reads better
+            return result2.name > result1.name ? -1 : 1;
         }
     }
 
     size_t size = globalNewCounts.length;
     Result[] counts = (cast(Result*) malloc(size * Result.sizeof))[0 .. size];
-    if (!counts.ptr)
-    {
-        fprintf(stderr, "Error: Memory allocation failed\n");
-        return;
-    }
     scope(exit)
         free(counts.ptr);
 
-    size_t i = 0;
-
+    size_t i;
     foreach (name, entry; globalNewCounts)
     {
         counts[i].name = name;
@@ -162,134 +157,25 @@ shared static ~this()
         qsort(counts.ptr, counts.length, Result.sizeof, &Result.qsort_cmp);
 
         FILE* fp = logfilename == "\0" ? stdout : fopen((logfilename).ptr, "w");
-        if (!fp)
-        {
-            fprintf(stderr, "Error: Cannot open log file '%.*s'\n",
-            cast(int)logfilename.length, logfilename.ptr);
-            return;
-        }
         if (fp)
         {
-
-            enum bytesAllocatedWidth = 16;
-            enum allocationsWidth = 12;
-            enum typeWidth = 30;
-            enum fileLineWidth = 30;
-
-            fprintf(fp, "Memory Allocation Report\n");
-            fprintf(fp, "=======================\n\n");
-            fprintf(fp, "%-*s | %-*s | %-*s | %-*s\n",
-                bytesAllocatedWidth, "Bytes Allocated".ptr,
-                allocationsWidth, "Allocations".ptr,
-                typeWidth, "Type".ptr,
-                fileLineWidth, "File:Line".ptr);
-
-            fprintf(fp, "%-*s-+-%-*s-+-%-*s-+-%-*s\n",
-                bytesAllocatedWidth, "----------------".ptr,
-                allocationsWidth, "------------".ptr,
-                typeWidth, "------------------------------".ptr,
-                fileLineWidth, "------------------------------".ptr);
-
+            fprintf(fp, "bytes allocated, allocations, type, function, file:line\n");
             foreach (ref c; counts)
             {
-                const(char)[] type = c.name;
-                const(char)[] fileLine = "";
-                ptrdiff_t colonPos = -1;
-
-                for (size_t j = c.name.length; j > 0; --j)
-                {
-                    if (c.name[j - 1] == ':')
-                    {
-                        colonPos = j - 1;
-                        break;
-                    }
-                }
-
-                if (colonPos != -1)
-                {
-                    type = c.name[0 .. colonPos];
-                    fileLine = c.name[colonPos + 1 .. $];
-                }
-
-                version (Windows) {
-                    version (X86) {
-                        // 32-bit Windows
-                        fprintf(fp, "%-*u | %-*u | %-*.*s | %-*.*s\n",
-                            bytesAllocatedWidth, cast(uint)c.entry.size,
-                            allocationsWidth, cast(uint)c.entry.count,
-                            typeWidth, cast(int)type.length, type.ptr,
-                            fileLineWidth, cast(int)fileLine.length, fileLine.ptr);
-                    } else {
-                        // 64-bit Windows
-                        fprintf(fp, "%-*llu | %-*llu | %-*.*s | %-*.*s\n",
-                            bytesAllocatedWidth, cast(ulong)c.entry.size,
-                            allocationsWidth, cast(ulong)c.entry.count,
-                            typeWidth, cast(int)type.length, type.ptr,
-                            fileLineWidth, cast(int)fileLine.length, fileLine.ptr);
-                    }
-                } else {
-                    // Linux and macOS
-                    fprintf(fp, "%-*lu | %-*lu | %-*.*s | %-*.*s\n",
-                        bytesAllocatedWidth, cast(ulong)c.entry.size,
-                        allocationsWidth, cast(ulong)c.entry.count,
-                        typeWidth, cast(int)type.length, type.ptr,
-                        fileLineWidth, cast(int)fileLine.length, fileLine.ptr);
-                }
+                fprintf(fp, "%15llu\t%15llu\t%8.*s\n",
+                    cast(ulong)c.entry.size, cast(ulong)c.entry.count,
+                    cast(int) c.name.length, c.name.ptr);
             }
-
-            ulong totalBytes = 0;
-            ulong totalAllocations = 0;
-            foreach (ref c; counts)
-            {
-                totalBytes += c.entry.size;
-                totalAllocations += c.entry.count;
-            }
-
-            fprintf(fp, "\nSummary:\n");
-            fprintf(fp, "%-*s-+-%-*s\n",
-                bytesAllocatedWidth, "-----------------".ptr,
-                allocationsWidth, "------------".ptr);
-
-            version (Windows) {
-                version (X86) {
-                    // 32-bit Windows
-                    fprintf(fp, "%-*s | %-*u\n",
-                        bytesAllocatedWidth, "Total Bytes".ptr,
-                        allocationsWidth, cast(uint)totalBytes);
-                    fprintf(fp, "%-*s | %-*u\n",
-                        bytesAllocatedWidth, "Total Allocations".ptr,
-                        allocationsWidth, cast(uint)totalAllocations);
-                } else {
-                    // 64-bit Windows
-                    fprintf(fp, "%-*s | %-*llu\n",
-                        bytesAllocatedWidth, "Total Bytes".ptr,
-                        allocationsWidth, cast(ulong)totalBytes);
-                    fprintf(fp, "%-*s | %-*llu\n",
-                        bytesAllocatedWidth, "Total Allocations".ptr,
-                        allocationsWidth, cast(ulong)totalAllocations);
-                }
-            } else {
-                // Linux and macOS
-                fprintf(fp, "%-*s | %-*lu\n",
-                    bytesAllocatedWidth, "Total Bytes".ptr,
-                    allocationsWidth, cast(ulong)totalBytes);
-                fprintf(fp, "%-*s | %-*lu\n",
-                    bytesAllocatedWidth, "Total Allocations".ptr,
-                    allocationsWidth, cast(ulong)totalAllocations);
-            }
-
-            fprintf(fp, "=======================\n");
-
             if (logfilename.length)
                 fclose(fp);
         }
         else
         {
             const err = errno;
-            fprintf(stderr, "Error: Cannot write profilegc log file '%.*s' (errno=%d)\n",
-                cast(int)logfilename.length,
+            fprintf(stderr, "cannot write profilegc log file '%.*s' (errno=%d)",
+                cast(int) logfilename.length,
                 logfilename.ptr,
-                cast(int)err);
+                cast(int) err);
         }
     }
 }
