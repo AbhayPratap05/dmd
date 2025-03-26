@@ -1,19 +1,28 @@
-bytes allocated, allocations, type, function, file:line
-            320	              1	immutable(char)[][int] profilegc.main src/profilegc.d:23
-            160	              1	float profilegc.main src/profilegc.d:18
-            160	              1	int profilegc.main src/profilegc.d:15
-             64	              1	double[] profilegc.main src/profilegc.d:56
-             48	              1	float[] profilegc.main src/profilegc.d:42
-             48	              1	int[] profilegc.main src/profilegc.d:41
-             32	              1	C profilegc.main src/profilegc.d:12
-             32	              1	void[] profilegc.main src/profilegc.d:55
-             16	              1	char[] profilegc.main src/profilegc.d:34
-             16	              1	char[] profilegc.main src/profilegc.d:36
-             16	              1	closure profilegc.main.foo src/profilegc.d:45
-             16	              1	float profilegc.main src/profilegc.d:16
-             16	              1	float profilegc.main src/profilegc.d:17
-             16	              1	int profilegc.main src/profilegc.d:13
-             16	              1	int profilegc.main src/profilegc.d:14
-             16	              1	int[] profilegc.main src/profilegc.d:22
-             16	              1	int[] profilegc.main src/profilegc.d:37
-             16	              1	wchar[] profilegc.main src/profilegc.d:35
+Memory Allocation Report
+=======================
+
+Bytes Allocated  | Allocations  | Type                       | Function  | File                 | Line
+-----------------+-------------+-----------------------------+-----------+----------------------+------
+496              | 1           | immutable(char)[][int]      | (unknown)  | D main               | 23  
+160              | 1           | float                       | (unknown)  | D main               | 18  
+160              | 1           | int                         | (unknown)  | D main               | 15  
+64               | 1           | double[]                    | (unknown)  | profilegc.main       | 56  
+48               | 1           | float[]                     | (unknown)  | D main               | 42  
+48               | 1           | int[]                       | (unknown)  | D main               | 41  
+32               | 1           | C                           | (unknown)  | D main               | 12  
+32               | 1           | profilegc.main.C            | (unknown)  | core.lifetime._d_newclassT!(C)._d_newclassT | 2763
+32               | 1           | ulong[]                     | (unknown)  | D main               | 15  
+32               | 1           | ulong[]                     | (unknown)  | D main               | 18  
+32               | 1           | void[]                      | (unknown)  | profilegc.main       | 55  
+16               | 1           | char[]                      | (unknown)  | D main               | 34  
+16               | 1           | char[]                      | (unknown)  | D main               | 36  
+16               | 1           | closure                     | (unknown)  | profilegc.main.foo   | 45  
+16               | 1           | float                       | (unknown)  | D main               | 16  
+16               | 1           | float                       | (unknown)  | D main               | 17  
+16               | 1           | int                         | (unknown)  | D main               | 13  
+16               | 1           | int                         | (unknown)  | D main               | 14  
+16               | 1           | int[]                       | (unknown)  | D main               | 22  
+16               | 1           | int[]                       | (unknown)  | D main               | 37  
+16               | 1           | void[]                      | (unknown)  | core.lifetime._d_newitemT!float._d_newitemT | 2837
+16               | 1           | void[]                      | (unknown)  | core.lifetime._d_newitemT!int._d_newitemT | 2837
+16               | 1           | wchar[]                     | (unknown)  | D main               | 35  
