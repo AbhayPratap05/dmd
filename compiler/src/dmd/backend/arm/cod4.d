@@ -42,6 +42,7 @@ import dmd.backend.ty;
 import dmd.backend.evalu8 : el_toldoubled;
 import dmd.backend.x86.xmm;
 import dmd.backend.arm.cod1 : getlvalue, loadFromEA, storeToEA;
+import dmd.backend.arm.cod2 : tyToExtend;
 import dmd.backend.arm.cod3 : COND, conditionCode, gentstreg;
 import dmd.backend.arm.instr;
 
@@ -133,9 +134,22 @@ void cdeq(ref CGstate cg, ref CodeBuilder cdb,elem* e,ref regm_t pretregs)
                 getregs(cdb, cs.reg);
                 const p = cast(targ_size_t*) &(e2.EV);
                 movregconst(cdb,cs.reg,*p,sz == 8);
-                freenode(e2);
-                goto Lp;
             }
+            else
+            {
+                /* Move constant into r, then store r into EA
+                 */
+                regm_t m = tyfloating(tyml) ? INSTR.FLOATREGS : cg.allregs;
+                m &= ~(mask(cs.base) | mask(cs.index));
+                assert(NOREG < 64);  // otherwise mask(NOREG) will not work
+                reg_t r = allocreg(cdb, m, tyml);
+                const p = cast(targ_size_t*) &(e2.EV);
+                movregconst(cdb,r,*p,sz == 8);
+                storeToEA(cs,r,sz);
+                cdb.gen(&cs);
+            }
+            freenode(e2);
+            goto Lp;
         }
         retregs = allregs;        // pick a reg, any reg
     }
@@ -870,6 +884,7 @@ void cdcmp(ref CGstate cg, ref CodeBuilder cdb,elem* e,ref regm_t pretregs)
     /* See if we should reverse the comparison, so a JA => JC, and JBE => JNC
      * (This is already reflected in the jop)
      */
+    if (0)
     if ((jop == COND.cs || jop == COND.cc) &&
         (op == OPgt || op == OPle) &&
         (tyuns(tym) || tyuns(e2.Ety))
@@ -1586,7 +1601,7 @@ void cdshtlng(ref CGstate cg, ref CodeBuilder cdb,elem* e,ref regm_t pretregs)
                     }
                     else
                     {
-                        // BUG: not generating LDRSH
+                        // TODO AArch64: not generating LDRSH
                         loadFromEA(cs,reg,8,2);               // LDRSH Xreg,[sp,#8]
                         cdb.gen(&cs);
                     }
@@ -1615,7 +1630,7 @@ void cdshtlng(ref CGstate cg, ref CodeBuilder cdb,elem* e,ref regm_t pretregs)
                     }
                     else
                     {
-                        // BUG: not generating LDRSW
+                        cs.Sextend = cast(ubyte)tyToExtend(TYint);
                         loadFromEA(cs,reg,8,4);              // LDRSW Xreg,[sp,#8]
                         cdb.gen(&cs);
                     }
