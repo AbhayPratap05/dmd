@@ -3449,7 +3449,8 @@ Expression getProperty(Type t, Scope* scope_, Loc loc, Identifier ident, int fla
         else if (ident == Id.opCall && mt.ty == Tclass)
             error(loc, "no property `%s` for type `%s`, did you mean `new %s`?", ident.toErrMsg(), mt.toErrMsg(), mt.toPrettyChars());
 
-        else if (!scope_.intypeof && (const n = importHint(ident.toString())))
+        const n = importHint(ident.toString());
+        if (!scope_.intypeof && n)
             error(loc, "no property `%s` for type `%s`, perhaps `import %.*s;` is needed?", ident.toErrMsg(), mt.toErrMsg(), cast(int)n.length, n.ptr);
         else
         {
